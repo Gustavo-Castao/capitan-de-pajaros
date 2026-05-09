@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yo, Antonio Esteban Agüero — Ordenar los versos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Lato',sans-serif;font-weight:300;background:#1a1208;color:#e8dfc8;min-height:100vh;padding:0}
+  .bg{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(180,130,40,.13),transparent 70%);z-index:0}
+  #gr{position:relative;z-index:1;max-width:680px;margin:0 auto;padding:2.5rem 1.5rem 4rem}
+  .hdr{text-align:center;margin-bottom:1.75rem}
+  .eye{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#c9a84c;margin-bottom:.5rem}
+  .ttl{font-family:'Playfair Display',serif;font-size:26px;font-weight:400;color:#f0e6c8;line-height:1.2;margin-bottom:.3rem}
+  .sbt{font-size:12px;color:#6a5a3a;letter-spacing:1px}
+  .pbar-w{height:3px;background:rgba(201,168,76,.12);border-radius:2px;margin-bottom:1.75rem}
+  .pbar-f{height:100%;background:linear-gradient(90deg,#c9a84c,#e8c96a);border-radius:2px;transition:width .4s ease}
+  .round-info{text-align:center;margin-bottom:1rem}
+  .round-badge{display:inline-block;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#c9a84c;border:0.5px solid rgba(201,168,76,.3);border-radius:20px;padding:4px 14px;margin-bottom:.5rem}
+  .round-q{font-family:'Playfair Display',serif;font-style:italic;font-size:15px;color:#b0a080;line-height:1.5;text-align:center;margin-bottom:1.25rem;padding:0 .5rem}
+  .slots{display:flex;flex-direction:column;gap:8px;margin-bottom:1.25rem}
+  .slot{min-height:46px;border:1.5px dashed rgba(201,168,76,.2);border-radius:8px;display:flex;align-items:center;padding:8px 12px;transition:border-color .2s,background .2s;cursor:pointer}
+  .slot.filled{border-style:solid;border-color:rgba(201,168,76,.35);background:rgba(201,168,76,.06)}
+  .slot.drag-over{border-color:#c9a84c;background:rgba(201,168,76,.12)}
+  .slot.correct{border-color:rgba(120,180,80,.6);background:rgba(80,140,50,.1)}
+  .slot.wrong{border-color:rgba(220,80,60,.5);background:rgba(200,60,40,.08);animation:shk .35s}
+  .slot .snum{font-size:11px;color:#4a3a20;margin-right:10px;min-width:14px;text-align:right;flex-shrink:0}
+  .slot .vtxt{font-family:'Playfair Display',serif;font-style:italic;font-size:14px;color:#ddd0b0;line-height:1.4;flex:1}
+  .slot .ph{font-size:13px;color:#3a2a10;font-style:italic}
+  .slot .xbtn{background:none;border:none;color:#6a5030;cursor:pointer;font-size:15px;padding:2px 4px;margin-left:6px;opacity:0;transition:opacity .15s;line-height:1;flex-shrink:0}
+  .slot:hover .xbtn{opacity:1}
+  .bank-lbl{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#4a3a20;margin-bottom:.6rem}
+  .bank{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.25rem;min-height:40px}
+  .chip{font-family:'Playfair Display',serif;font-style:italic;font-size:13px;color:#d4c49a;background:rgba(201,168,76,.1);border:0.5px solid rgba(201,168,76,.3);border-radius:6px;padding:7px 12px;cursor:grab;transition:background .15s,transform .15s,border-color .15s;user-select:none;line-height:1.4}
+  .chip:hover{background:rgba(201,168,76,.18);border-color:rgba(201,168,76,.5);transform:translateY(-1px)}
+  .chip.dragging{opacity:.3}
+  .chip.used{display:none}
+  .chip.sel{outline:2px solid #c9a84c}
+  .btn-row{display:flex;justify-content:center;gap:12px;margin-top:.75rem}
+  .cbtn{background:#c9a84c;color:#1a1208;border:none;border-radius:8px;font-family:'Lato',sans-serif;font-weight:400;font-size:12px;letter-spacing:2px;text-transform:uppercase;padding:11px 28px;cursor:pointer;transition:background .2s,transform .15s}
+  .cbtn:hover{background:#e8c96a;transform:translateY(-1px)}
+  .cbtn:disabled{background:#3a2a10;color:#5a4a28;cursor:not-allowed;transform:none}
+  .fbk{text-align:center;margin-top:.75rem;font-size:13px;color:#c9a84c;min-height:18px}
+  .win{display:none;text-align:center;animation:fi .6s ease}
+  .wtitle{font-family:'Playfair Display',serif;font-size:28px;color:#e8c96a;margin-bottom:.4rem}
+  .wsub{font-size:12px;color:#6a5a3a;letter-spacing:1px;margin-bottom:1.75rem}
+  .stanza-done{text-align:left;font-family:'Playfair Display',serif;font-style:italic;font-size:14px;line-height:2.1;color:#ddd0b0;border-left:2px solid #c9a84c;padding-left:1.25rem;margin-bottom:1.75rem}
+  .poet-note{background:rgba(201,168,76,.07);border:0.5px solid rgba(201,168,76,.2);border-radius:8px;padding:1rem 1.25rem;font-size:13px;color:#9a8a6a;line-height:1.7;text-align:left;margin-bottom:1.5rem}
+  .poet-note strong{color:#c9a84c;font-weight:400}
+  .pbtn{background:transparent;color:#c9a84c;border:0.5px solid rgba(201,168,76,.4);border-radius:8px;font-family:'Lato',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:10px 24px;cursor:pointer;transition:background .2s}
+  .pbtn:hover{background:rgba(201,168,76,.1)}
+  .prev-poem{text-align:left;font-family:'Playfair Display',serif;font-style:italic;font-size:13px;line-height:1.9;color:#6a5a3a;border-left:1.5px solid rgba(201,168,76,.2);padding-left:1rem;margin-bottom:1.5rem}
+  @keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+  @keyframes fi{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+  @media(max-width:480px){
+    #gr{padding:1.5rem 1rem 3rem}
+    .ttl{font-size:20px}
+    .chip{font-size:12px;padding:6px 10px}
+    .slot .vtxt{font-size:13px}
+  }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div id="gr">
+  <div class="hdr">
+    <div class="eye">Antonio Esteban Agüero · San Luis, Argentina</div>
+    <div class="ttl">Yo, Antonio Esteban Agüero</div>
+    <div class="sbt" id="round-counter">Estrofa 1 de 7</div>
+  </div>
+  <div class="pbar-w"><div class="pbar-f" id="pbar" style="width:0%"></div></div>
+  <div id="game-area"></div>
+  <div id="win-screen" class="win"></div>
+</div>
+
+<script>
+const STANZAS = [
+  { label:"Estrofa I · La proclama", hint:"El poeta se presenta y anuncia su llegada a Buenos Aires.", verses:[
+    "Yo, Antonio Esteban Agüero,",
+    "capitán de pájaros,",
+    "general de livianas mariposas,",
+    "estoy en Buenos Aires,",
+    "la capital del Plata,",
+    "para ser presidente",
+    "y organizar la Patria."
+  ]},
+  { label:"Estrofa II · El ejército", hint:"Un ejército de aves lo sigue: alondras, cóndores, águilas, lechuzos.", verses:[
+    "Detrás he dejado",
+    "los pueblos que me siguen,",
+    "ejército de alondras,",
+    "la división blindada de los cóndores,",
+    "las águilas que saben del sabor de la piedra,",
+    "calandrias, chalchaleros, chiriguas mañaneras,",
+    "los secretos lechuzos que me pasan",
+    "la información del día y de la noche."
+  ]},
+  { label:"Estrofa III · Los jinetes", hint:"Un millón de caballos rodea la ciudad; sus jinetes son héroes y espectros de la historia argentina.", verses:[
+    "Tengo un millón de caballos",
+    "¿Escucháis su relincho?",
+    "Que rodean la urbe por sus cuatro costados,",
+    "sus jinetes son muertos de Facundo,",
+    "son muertos de Ramírez,",
+    "montoneros del Chacho",
+    "sableadores de Pringles,",
+    "domadores, remeseros, rastreadores,",
+    "guitarreros,",
+    "espectrales jinetes que cabalgan",
+    "mi millón de caballos."
+  ]},
+  { label:"Estrofa IV · La rendición", hint:"Les pide que se rindan y guarden las armas.", verses:[
+    "Les ruego que se rindan",
+    "que depongan las armas,",
+    "que guarden los tanques,",
+    "y encierren los cañones,"
+  ]},
+  { label:"Estrofa V · La Plaza", hint:"Anuncia su llegada a la Plaza de Mayo para prestar juramento.", verses:[
+    "porque mañana a mediodía",
+    "quiero estar en la Plaza de Mayo",
+    "sobre viejos balcones del Cabildo",
+    "para ser presidente y prestar juramento:"
+  ]},
+  { label:"Estrofa VI · El juramento", hint:"Jura por la tierra, el cielo, los ríos, los pobres y los viejos.", verses:[
+    "por los ríos de sangre derramada,",
+    "por los indios y los blancos muertos",
+    "por el sol y la luna,",
+    "por la tierra y el cielo,",
+    "por el padre Aconcagua,",
+    "y por el Mar oceánico,",
+    "y por todas las hierbas y los bosques,",
+    "y por todas las flores y los pájaros,",
+    "y por el hambre de los niños pobres,",
+    "y la tristeza de los niños ricos,",
+    "y el dolor de las jóvenes paridas,",
+    "y la agonía de los viejos ...",
+    "Juro",
+    "Yo juro."
+  ]},
+  { label:"Estrofa VII · La entrada", hint:"El cierre: jura hacer de este país la Patria y anuncia que nadie podrá detenerlo.", verses:[
+    "Hacer de este país la Patria.",
+    "Ordeno que se rindan",
+    "porque mañana a mediodía",
+    "entraré en Buenos Aires.",
+    "Tengo un millón de caballos",
+    "¿Escucháis su relincho?",
+    "Nadie podrá atajarme."
+  ]}
+];
+
+let current=0, completedPoem=[], slotMap={}, draggedId=null, selId=null;
+
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+
+function initGame(){
+  current=0;completedPoem=[];
+  document.getElementById('win-screen').style.display='none';
+  document.getElementById('game-area').style.display='block';
+  renderRound();
+}
+
+function renderRound(){
+  slotMap={};draggedId=null;selId=null;
+  const st=STANZAS[current];
+  const shuffled=shuffle(st.verses.map((v,i)=>({id:'v'+i,text:v,pos:i})));
+  document.getElementById('round-counter').textContent=`Estrofa ${current+1} de ${STANZAS.length}`;
+  document.getElementById('pbar').style.width=(current/STANZAS.length*100)+'%';
+
+  const area=document.getElementById('game-area');
+  area.innerHTML='';
+
+  if(completedPoem.length>0){
+    const prev=document.createElement('div');
+    prev.className='prev-poem';
+    prev.innerHTML=completedPoem.map(s=>s.verses.join('<br>')).join('<br><br>');
+    area.appendChild(prev);
+  }
+
+  const badge=document.createElement('div');
+  badge.className='round-info';
+  badge.innerHTML=`<div class="round-badge">${st.label}</div><div class="round-q">"${st.hint}"</div>`;
+  area.appendChild(badge);
+
+  const slotsDiv=document.createElement('div');
+  slotsDiv.className='slots';
+  st.verses.forEach((_,i)=>{
+    const slotId='slot'+i;
+    const d=document.createElement('div');
+    d.className='slot';d.dataset.slotId=slotId;d.dataset.correctPos=i;
+    d.innerHTML=`<span class="snum">${i+1}</span><span class="ph">— verso ${i+1} —</span>`;
+    d.addEventListener('dragover',e=>{e.preventDefault();d.classList.add('drag-over')});
+    d.addEventListener('dragleave',()=>d.classList.remove('drag-over'));
+    d.addEventListener('drop',e=>{e.preventDefault();d.classList.remove('drag-over');drop(slotId)});
+    d.addEventListener('click',()=>{if(slotMap[slotId])removeSlot(slotId);else if(selId)drop(slotId)});
+    slotsDiv.appendChild(d);
+  });
+  area.appendChild(slotsDiv);
+
+  const blbl=document.createElement('div');blbl.className='bank-lbl';blbl.textContent='Versos disponibles';
+  area.appendChild(blbl);
+  const bank=document.createElement('div');bank.className='bank';bank.id='bank';
+  shuffled.forEach(v=>{
+    const c=document.createElement('div');
+    c.className='chip';c.id='chip_'+v.id;c.dataset.vid=v.id;c.dataset.pos=v.pos;
+    c.textContent=v.text;c.draggable=true;
+    c.addEventListener('dragstart',()=>{draggedId=v.id;c.classList.add('dragging')});
+    c.addEventListener('dragend',()=>{draggedId=null;c.classList.remove('dragging')});
+    c.addEventListener('click',()=>selectChip(v.id));
+    bank.appendChild(c);
+  });
+  area.appendChild(bank);
+
+  const row=document.createElement('div');row.className='btn-row';
+  const btn=document.createElement('button');btn.className='cbtn';btn.id='cbtn';btn.textContent='Verificar';
+  btn.addEventListener('click',checkRound);
+  row.appendChild(btn);
+  area.appendChild(row);
+
+  const fbk=document.createElement('div');fbk.className='fbk';fbk.id='fbk';
+  area.appendChild(fbk);
+}
+
+function selectChip(vid){
+  if(selId===vid){const c=document.getElementById('chip_'+vid);if(c)c.classList.remove('sel');selId=null;return;}
+  if(selId){const p=document.getElementById('chip_'+selId);if(p)p.classList.remove('sel');}
+  selId=vid;
+  const c=document.getElementById('chip_'+vid);if(c)c.classList.add('sel');
+}
+
+function drop(slotId){
+  const vid=draggedId||selId;if(!vid)return;
+  if(slotMap[slotId])removeSlot(slotId,false);
+  for(const[sid,aid] of Object.entries(slotMap)){if(aid===vid){removeSlot(sid,false);break;}}
+  slotMap[slotId]=vid;
+  const chip=document.getElementById('chip_'+vid);if(chip)chip.classList.add('used');
+  const slot=document.querySelector(`[data-slot-id="${slotId}"]`);
+  const pos=parseInt(slot.dataset.correctPos);
+  const chipEl=document.getElementById('chip_'+vid);
+  const txt=STANZAS[current].verses[parseInt(chipEl.dataset.pos)];
+  slot.innerHTML=`<span class="snum">${pos+1}</span><span class="vtxt">${txt}</span><button class="xbtn" title="quitar">✕</button>`;
+  slot.classList.add('filled');slot.classList.remove('correct','wrong');
+  slot.querySelector('.xbtn').addEventListener('click',e=>{e.stopPropagation();removeSlot(slotId)});
+  if(selId===vid)selId=null;
+}
+
+function removeSlot(slotId,upd=true){
+  const vid=slotMap[slotId];if(!vid)return;
+  delete slotMap[slotId];
+  const chip=document.getElementById('chip_'+vid);if(chip){chip.classList.remove('used','sel');}
+  if(upd){
+    const slot=document.querySelector(`[data-slot-id="${slotId}"]`);
+    const pos=parseInt(slot.dataset.correctPos);
+    slot.innerHTML=`<span class="snum">${pos+1}</span><span class="ph">— verso ${pos+1} —</span>`;
+    slot.classList.remove('filled','correct','wrong');
+  }
+}
+
+function checkRound(){
+  const st=STANZAS[current];
+  const total=st.verses.length;
+  const filled=Object.keys(slotMap).length;
+  if(filled<total){document.getElementById('fbk').textContent=`Faltan ${total-filled} versos por colocar.`;return;}
+  let ok=0;
+  document.querySelectorAll('.slot').forEach(slot=>{
+    const slotId=slot.dataset.slotId;
+    const vid=slotMap[slotId];if(!vid)return;
+    const assignedPos=parseInt(document.getElementById('chip_'+vid).dataset.pos);
+    const correctPos=parseInt(slot.dataset.correctPos);
+    slot.classList.remove('correct','wrong');
+    if(assignedPos===correctPos){ok++;slot.classList.add('correct');}
+    else slot.classList.add('wrong');
+  });
+  if(ok===total){
+    completedPoem.push({label:st.label,verses:st.verses});
+    document.getElementById('fbk').textContent='';
+    document.getElementById('cbtn').disabled=true;
+    setTimeout(()=>{if(current<STANZAS.length-1){current++;renderRound();}else showWin();},700);
+  } else {
+    document.getElementById('fbk').textContent=`${ok} de ${total} correctos. ¡Ajustá los demás!`;
+  }
+}
+
+function showWin(){
+  document.getElementById('game-area').style.display='none';
+  document.getElementById('pbar').style.width='100%';
+  document.getElementById('round-counter').textContent='Poema completo';
+  const win=document.getElementById('win-screen');
+  win.style.display='block';
+  win.innerHTML=`
+    <div class="wtitle">¡El capitán ha llegado!</div>
+    <div class="wsub">Reconstruiste el poema completo</div>
+    <div class="stanza-done">${STANZAS.map(s=>s.verses.join('<br>')).join('<br><br>')}</div>
+    <div class="poet-note"><strong>Antonio Esteban Agüero</strong> (1917–1970) fue poeta, maestro rural y figura central de la literatura puntana. Nacido en San Luis, escribió desde los llanos y el habla del interior profundo. En este poema se imagina presidente de una patria imposible y hermosa, gobernada por pájaros, montoneros y fantasmas de la historia — una proclama épica y tierna que pocas antologías recuerdan.</div>
+    <button class="pbtn" onclick="initGame()">Jugar de nuevo</button>
+  `;
+}
+
+initGame();
+</script>
+</body>
+</html>
